@@ -1,2 +1,2 @@
-# Chess-Engine
-Simple Chess Engine
+# Chess Engine
+# Simple Chess Engine
