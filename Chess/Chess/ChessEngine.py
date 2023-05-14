@@ -4,7 +4,6 @@ this class is responsible for storing all the information about the current stat
 
 class GameState():
    def __init__(self):
-      # Initialize the starting chess board with the standard starting positions of pieces
       self.board =  [
          ["bR" , "bN" , "bB" , "bQ" , "bK" , "bB" , "bN" , "bR"],
          ["bp" , "bp" , "bp" , "bp" , "bp" , "bp" , "bp" , "bp"],
@@ -16,15 +15,11 @@ class GameState():
          ["wR" , "wN" , "wB" , "wQ" , "wK" , "wB" , "wN" , "wR"]
       ]
 
-      # A dictionary that maps each piece to its respective move generating function
       self.moveFunctions = {'p': self.getPawnMoves, 'R': self.getRookMoves, 'N': self.getKnightMoves,
                             'B': self.getBishopMoves, 'Q': self.getQueenMoves, 'K': self.getKingMoves}
-
-      # A boolean variable indicating whether it's white's turn to move or not
-      self.whiteToMove = True
-
-      # A list to keep track of the moves played in the game
+      
       self.moveLog = []
+      self.whiteToMove = True
       self.whiteKingLocation = (7, 4)
       self.blackKingLocation = (0, 4)
       self.inCheck = False
@@ -32,14 +27,12 @@ class GameState():
       self.checks = []
 
 
+
+
    def makeMove(self, move):
-      # Set the starting square of the move to empty
-      self.board[move.startRow][move.startCol] = "--"
-      # Set the ending square of the move to the piece that was moved
       self.board[move.endRow][move.endCol] = move.pieceMoved
-      # Add the move to the move log
+      self.board[move.startRow][move.startCol] = "--"
       self.moveLog.append(move)
-      # Switch the player turn
       self.whiteToMove = not self.whiteToMove
       if move.pieceMoved == 'wK':
          self.whiteKingLocation = (move.endRow, move.endCol)
@@ -47,23 +40,12 @@ class GameState():
          self.blackKingLocation = (move.endRow, move.endCol)
    
    
-   # This function undoes the previous move made on the chess board. 
-   # If there are moves in the moveLog, it removes the last move from the 
-   # log and reverts the changes made to the board. 
-   # The piece that was moved is returned to its original position and 
-   # any captured piece is put back on the board. Finally, it switches 
-   # the turn of the player to the one who made the previous move.
 
    def undoMove(self):
-      # Check if there are any moves to undo
       if len(self.moveLog) != 0:
-         # Remove the last move from the move log
          move = self.moveLog.pop()
-         # Move the piece back to its original position
          self.board[move.startRow][move.startCol] = move.pieceMoved
-         # If a piece was captured, put it back on the board
          self.board[move.endRow][move.endCol] = move.pieceCaptured
-         # Switch the turn of the player to the one who made the previous move
          self.whiteToMove = not self.whiteToMove
          if move.pieceMoved == 'wK':
             self.whiteKingLocation = (move.startRow, move.startCol)
@@ -108,28 +90,16 @@ class GameState():
 
 
    def getAllPossibleMoves(self):
-      # Generates all possible moves for all the pieces of the current player
-      
-      # Create an empty list to store all the moves
-      moves = []
-      
-      # Loop through each cell of the board to find all the pieces of the current player
+      moves = []   
       for r in range(len(self.board)):
          for c in range(len(self.board[r])):
-            # Check if the piece belongs to the current player
             turn = self.board[r][c][0]
-            if (turn == 'w' and self.whiteToMove) or (turn == 'b' and not self.whiteToMove):
-               
-               # Get the type of the piece
-               piece = self.board[r][c][1]
-               
-               # Call the move function for the piece to get all its possible moves
+            if (turn == 'w' and self.whiteToMove) or (turn == 'b' and not self.whiteToMove):               
+               piece = self.board[r][c][1] 
                self.moveFunctions[piece](r, c, moves)
-      
-      # Return the list of all possible moves
       return moves
 
-   # This function is used to get all possible moves for a pawn.
+
 
    def getPawnMoves(self, r, c, moves):
       piecePinned = False
@@ -181,7 +151,7 @@ class GameState():
                self.pins.remove(self.pins[i])
             break
       directions = ((-1, 0), (0, -1), (1, 0), (0, 1))
-      enemyColor = 'b' if self.whiteToMove else 'w'
+      enemyColor = "b" if self.whiteToMove else "w"
       for d in directions:
          for i in range(1, 8):
             endRow = r + d[0] * i
@@ -189,19 +159,15 @@ class GameState():
             if 0 <= endRow < 8 and 0 <= endCol < 8:
                if not piecePinned or pinDirection == d or pinDirection == (-d[0], -d[1]):
                   endPiece = self.board[endRow][endCol]
-                
-                  if endPiece == '--':
+                  if endPiece == "--":
                      moves.append(Move((r, c), (endRow, endCol), self.board))
-                # If the square contains an enemy piece, add a capture move and stop searching in this direction
                   elif endPiece[0] == enemyColor:
                      moves.append(Move((r, c), (endRow, endCol), self.board))
                      break
-                # If the square contains a friendly piece, stop searching in this direction
                   else:
                      break
-            # If the square is outside the board bounds, stop searching in this direction
             else:
-                break
+               break
 
 
 
@@ -213,7 +179,7 @@ class GameState():
             self.pins.remove(self.pins[i])
             break
       knightMoves = ((-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1))
-      allyColor = 'w' if self.whiteToMove else 'b'
+      allyColor = "w" if self.whiteToMove else "b"
       for m in knightMoves:
          endRow = r + m[0]
          endCol = c + m[1]
@@ -233,23 +199,23 @@ class GameState():
             self.pins.remove(self.pins[i])
             break
       directions = ((-1, -1), (-1, 1), (1, -1), (1, 1))
-      enemyColor = 'b' if self.whiteToMove else 'w'
+      enemyColor = "b" if self.whiteToMove else "w"
       for d in directions:
-            for i in range(1, 8):
-               endRow = r + d[0] * i
-               endCol = c + d[1] * i
-               if 0 <= endRow < 8 and 0 <= endCol < 8:
-                  if not piecePinned or pinDirection == d or pinDirection == (-d[0], -d[1]):
-                     endPiece = self.board[endRow][endCol]
-                     if endPiece == '--':
-                        moves.append(Move((r, c), (endRow, endCol), self.board))
-                     elif endPiece[0] == enemyColor:
-                        moves.append(Move((r, c), (endRow, endCol), self.board))
-                        break
-                     else:
-                        break
-               else:
-                  break
+         for i in range(1, 8):
+            endRow = r + d[0] * i
+            endCol = c + d[1] * i
+            if 0 <= endRow < 8 and 0 <= endCol < 8:
+               if not piecePinned or pinDirection == d or pinDirection == (-d[0], -d[1]):
+                  endPiece = self.board[endRow][endCol]
+                  if endPiece == "--":
+                     moves.append(Move((r, c), (endRow, endCol), self.board))
+                  elif endPiece[0] == enemyColor:
+                     moves.append(Move((r, c), (endRow, endCol), self.board))
+                     break
+                  else:
+                     break
+            else:
+               break
 
    def getQueenMoves(self, r, c, moves):
       self.getRookMoves(r, c, moves)
@@ -278,65 +244,64 @@ class GameState():
                   self.blackKingLocation = (r, c)
 
 
-def checkForPinsAndChecks(self):
-   pins = []
-   checks = []
-   nCheck = False
-   if self.whiteToMove:
-      enemyColor = 'b'
-      allyColor = 'w'
-      startRow = self.whiteKingLocation[0]
-      startCol = self.whiteKingLocation[1]
-   else:
-      nemyColor = 'w'
-      allyColor = 'b'
-      startRow = self.blackKingLocation[0]
-      startCol = self.blackKingLocation[1]
-   directions = ((-1, 0), (0, -1), (1, 0), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1))
-   for j in range(len(directions)):
-      d = directions[j]
-      possiblePin = ()
-      for i in range(1, 8):
-         endRow = startRow + d[0] * i
-         endCol = startCol + d[1] * i
-         if 0 <= endRow < 8 and 0 <= endCol < 8:
-            endPiece = self.board[endRow][endCol]
-            if endPiece[0] == allyColor and endPiece[1] != 'K':
-               if possiblePin == ():
-                  possiblePin = (endRow, endCol, d[0], d[1])
-               else:
-                  break
-            elif endPiece[0] == enemyColor:
-               type = endPiece[1]
-               if (0 <= j <= 3 and type == 'R') or \
-                     (4 <= j <= 7 and type == 'B') or \
-                     (i == 1 and type == 'p' and ((enemyColor == 'w' and 6 <= j <= 7) or (enemyColor == 'b' and 4 <= j <= 5))) or \
-                     (type == 'Q') or (i == 1 and type == 'K'):
+   def checkForPinsAndChecks(self):
+      pins = []
+      checks = []
+      inCheck = False
+      if self.whiteToMove:
+         enemyColor = "b"
+         allyColor = "w"
+         startRow = self.whiteKingLocation[0]
+         startCol = self.whiteKingLocation[1]
+      else:
+         enemyColor = "w"
+         allyColor = "b"
+         startRow = self.blackKingLocation[0]
+         startCol = self.blackKingLocation[1]
+      directions = ((-1, 0), (0, -1), (1, 0), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1))
+      for j in range(len(directions)):
+         d = directions[j]
+         possiblePin = ()
+         for i in range(1, 8):
+            endRow = startRow + d[0] * i
+            endCol = startCol + d[1] * i
+            if 0 <= endRow < 8 and 0 <= endCol < 8:
+               endPiece = self.board[endRow][endCol]
+               if endPiece[0] == allyColor:
                   if possiblePin == ():
-                     inCheck = True
-                     checks.append((endRow, endCol, d[0], d[1]))
+                     possiblePin = (endRow, endCol, d[0], d[1])
+                  else:
                      break
-                  else: 
-                     pins.append(possiblePin)
+               elif endPiece[0] == enemyColor:
+                  type = endPiece[1]
+                  if (0 <= j <= 3 and type == 'R') or \
+                        (4 <= j <= 7 and type == 'B') or \
+                        (i == 1 and type == 'p' and ((enemyColor == 'w' and 6 <= j <= 7) or (enemyColor == 'b' and 4 <= j <= 5))) or \
+                        (type == 'Q') or (i == 1 and type == 'K'):
+                     if possiblePin == ():
+                        inCheck = True
+                        checks.append((endRow, endCol, d[0], d[1]))
+                        break
+                     else: 
+                        pins.append(possiblePin)
+                        break
+                  else:
                      break
             else:
                break
-      else:
-         break
-   knightMoves = ((-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1))
-   for m in knightMoves:
-      endRow = startRow + m[0]
-      endCol = startCol + m[1]
-      if 0 <= endRow < 8 and 0 <= endCol < 8:
-         endPiece = self.board[endRow][endCol]
-         if endPiece[0] == enemyColor and endPiece[1] == 'N':
-            inCheck = True
-            checks.append((endRow, endCol, m[0], m[1]))
-   return inCheck, pins, checks
+      knightMoves = ((-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1))
+      for m in knightMoves:
+         endRow = startRow + m[0]
+         endCol = startCol + m[1]
+         if 0 <= endRow < 8 and 0 <= endCol < 8:
+            endPiece = self.board[endRow][endCol]
+            if endPiece[0] == enemyColor and endPiece[1] == 'N':
+               inCheck = True
+               checks.append((endRow, endCol, m[0], m[1]))
+      return inCheck, pins, checks
 
 
       
-
 class Move():
 
    ranksToRows = {"1": 7, "2": 6, "3": 5, "4": 4,
