@@ -25,6 +25,10 @@ class GameState():
       self.inCheck = False
       self.pins = []
       self.checks = []
+      self.checkMate = False
+      self.staleMate = False
+      self.enPassantPossible = ()
+
 
 
 
@@ -38,6 +42,18 @@ class GameState():
          self.whiteKingLocation = (move.endRow, move.endCol)
       elif move.pieceMoved == 'bK':
          self.blackKingLocation = (move.endRow, move.endCol)
+      # en passant
+      if move.pieceMoved[1] == 'p' and abs(move.startRow - move.endRow) == 2:
+         self.enPassantPossible = ((move.endRow + move.startRow) // 2, move.endCol)
+      else:
+         self.enPassantPossible = ()
+      if move.enPassant:
+         self.board[move.startRow][move.endCol] = "--"
+      if move.pawnPromotion:
+         promotedPiece = input("Promote to Q, R, B, or N:")
+         self.board[move.endRow][move.endCol] = move.pieceMoved[0] + promotedPiece
+      
+
    
    
 
@@ -51,7 +67,15 @@ class GameState():
             self.whiteKingLocation = (move.startRow, move.startCol)
          elif move.pieceMoved == 'bK':
             self.blackKingLocation = (move.startRow, move.startCol)
+         if move.enPassant:
+            self.board[move.endRow][move.endCol] = "--"
+            self.board[move.startRow][move.endCol] = move.pieceCaptured
+            self.enPassantPossible = (move.endRow, move.endCol)
+         if move.pieceMoved[1] == 'p' and abs(move.startRow - move.endRow) == 2:
+            self.enPassantPossible = ()
    
+
+
    def getValidMoves(self):
       moves = []
       self.inCheck, self.pins, self.checks = self.checkForPinsAndChecks()
@@ -85,6 +109,15 @@ class GameState():
             self.getKingMoves(kingRow, kingCol, moves)
       else:
          moves = self.getAllPossibleMoves()
+      
+      if len(moves) == 0:
+         if self.inCheck:
+            self.checkMate = True
+         else:
+            self.staleMate
+      else:
+         self.checkMate = False
+         self.staleMate = False
       return moves
 
 
@@ -110,34 +143,42 @@ class GameState():
             pinDirection = (self.pins[i][2], self.pins[i][3])
             self.pins.remove(self.pins[i])
             break
+
       if self.whiteToMove:
-         if self.board[r-1][c] == '--':
-            if not piecePinned or pinDirection == (-1, 0):
-               moves.append(Move((r, c),(r-1, c), self.board))
-               if r == 6 and self.board[r-2][c] == '--':
-                  moves.append(Move((r, c), (r-2, c), self.board))
-         if c-1 >= 0:
-            if self.board[r-1][c-1][0] == 'b':
-               if not piecePinned or pinDirection == (-1, -1):
-                  moves.append(Move((r,c), (r-1, c-1), self.board))
-         if c+1 <= 7:
-            if self.board[r-1][c+1][0] == 'b':
-               if not piecePinned or pinDirection == (-1, 1):
-                  moves.append(Move((r,c), (r-1, c+1), self.board))
+         moveAmount = -1
+         startRow = 6
+         backRow = 0
+         enemyColor = 'b'
       else:
-         if self.board[r+1][c] == '--':
-            if not piecePinned or pinDirection == (1, 0):
-               moves.append(Move((r, c),(r+1, c), self.board))
-               if r == 1 and self.board[r+2][c] == '--':
-                  moves.append(Move((r, c), (r+2, c), self.board))
-         if c-1 >= 0:
-            if self.board[r+1][c-1][0] == 'w':
-               if not piecePinned or pinDirection == (1, -1):
-                  moves.append(Move((r,c), (r+1, c-1), self.board))
-         if c+1 <= 7:
-            if self.board[r+1][c+1][0] == 'w':
-               if not piecePinned or pinDirection == (1, 1):
-                  moves.append(Move((r,c), (r+1, c+1), self.board))
+         moveAmount = 1
+         startRow = 1
+         backRow = 7
+         enemyColor = 'w'
+      pawnPromotion = False
+
+      if self.board[r + moveAmount][c] == "--":
+         if not piecePinned or pinDirection == (moveAmount, 0):
+            if r + moveAmount == backRow:
+               pawnPromotion = True
+            moves.append(Move((r, c), (r + moveAmount, c), self.board, pawnPromotion = pawnPromotion))
+            if r == startRow and self.board[r + 2 * moveAmount][c] == "--":
+               moves.append(Move((r, c), (r + 2 * moveAmount, c), self.board))
+      if c - 1 >= 0:
+         if not piecePinned or pinDirection == (moveAmount, -1):
+            if self.board[r + moveAmount][c - 1][0] == enemyColor:
+               if r + moveAmount == backRow:
+                  pawnPromotion = True
+               moves.append(Move((r, c), (r + moveAmount, c - 1), self.board, pawnPromotion = pawnPromotion))
+            if (r + moveAmount, c - 1) == self.enPassantPossible:
+               moves.append(Move((r, c), (r + moveAmount, c - 1), self.board, enPassant = True))
+      if c + 1 <= 7:
+         if not piecePinned or pinDirection == (moveAmount, 1):
+            if self.board[r + moveAmount][c + 1][0] == enemyColor:
+               if r + moveAmount == backRow:
+                  pawnPromotion = True
+               moves.append(Move((r, c), (r + moveAmount, c + 1), self.board, pawnPromotion = pawnPromotion))
+            if (r + moveAmount, c - 1) == self.enPassantPossible:
+               moves.append(Move((r, c), (r + moveAmount, c + 1), self.board, enPassant = True))
 
 
    def getRookMoves(self, r, c, moves):
@@ -311,13 +352,17 @@ class Move():
                    "e": 4, "f": 5, "g": 6, "h": 7}
    colsToFiles = {v: k for k, v in filesToCols.items()}
 
-   def __init__(self, startSq, endSq, board):
+   def __init__(self, startSq, endSq, board, enPassant=False, pawnPromotion=False):
       self.startRow = startSq[0]
       self.startCol = startSq[1]
       self.endRow = endSq[0]
       self.endCol = endSq[1]
       self.pieceMoved = board[self.startRow][self.startCol]
       self.pieceCaptured = board[self.endRow][self.endCol]
+      self.enPassant = enPassant
+      self.pawnPromotion = pawnPromotion
+      if enPassant:
+         self.pieceCaptured = 'bp' if self.pieceMoved == 'wp' else 'wp'
       self.moveID = self.startRow * 1000 + self.startCol * 100 + self.endRow * 10 + self.endCol
       print(self.moveID)
 
