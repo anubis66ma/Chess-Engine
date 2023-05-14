@@ -177,7 +177,7 @@ class GameState():
                if r + moveAmount == backRow:
                   pawnPromotion = True
                moves.append(Move((r, c), (r + moveAmount, c + 1), self.board, pawnPromotion = pawnPromotion))
-            if (r + moveAmount, c - 1) == self.enPassantPossible:
+            if (r + moveAmount, c + 1) == self.enPassantPossible:
                moves.append(Move((r, c), (r + moveAmount, c + 1), self.board, enPassant = True))
 
 
