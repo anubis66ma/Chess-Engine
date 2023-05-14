@@ -73,9 +73,9 @@ class GameState():
                validSquares = [(checkRow, checkCol)]
             else:
                for i in range(1, 8):
-                  validSquares = (kingRow + check[2] * i, kingCol + check[3] * i)
-                  validSquares.append(validSquares)
-                  if validSquares[0] == checkRow and validSquares[1] == checkCol:
+                  validSquare = (kingRow + check[2] * i, kingCol + check[3] * i)
+                  validSquares.append(validSquare)
+                  if validSquare[0] == checkRow and validSquare[1] == checkCol:
                      break
             for i in range(len(moves) -1, -1, -1):
                if moves[i].pieceMoved[1] != 'K':
@@ -267,7 +267,7 @@ class GameState():
             endCol = startCol + d[1] * i
             if 0 <= endRow < 8 and 0 <= endCol < 8:
                endPiece = self.board[endRow][endCol]
-               if endPiece[0] == allyColor:
+               if endPiece[0] == allyColor and endPiece[1] != 'K':
                   if possiblePin == ():
                      possiblePin = (endRow, endCol, d[0], d[1])
                   else:
