@@ -34,10 +34,7 @@ class GameState():
       self.blackCastleKingside = True
       self.blackCastleQueenside = True
       self.castleRightsLog = [CastleRights(self.whiteCastleKingside, self.whiteCastleQueenside, self.blackCastleKingside, self.blackCastleQueenside)]
-
       
-      '''self.currentCastlingRight = CastleRights(True, True, True, True)
-      self.castleRightsLog = [self.currentCastlingRight]'''
 
 
 
@@ -89,8 +86,6 @@ class GameState():
             self.board[move.endRow][move.endCol] = "--"
             self.board[move.startRow][move.endCol] = move.pieceCaptured
             self.enPassantPossible = (move.endRow, move.endCol)
-         if move.pieceMoved[1] == 'p' and abs(move.startRow - move.endRow) == 2:
-            self.enPassantPossible = ()
          if move.pieceMoved[1] == 'p' and abs(move.startRow - move.endRow) == 2:
             self.enPassantPossible = ()
          if move.castle:
@@ -337,12 +332,11 @@ class GameState():
    def getCastleMoves(self, r, c, moves, allyColor):
       inCheck = self.squareUnderAttack(r, c, allyColor)
       if inCheck:
-         print("oof")
          return
       if (self.whiteToMove and self.whiteCastleKingside) or (not self.whiteToMove and self.blackCastleKingside):
          self.getKingsideCastleMoves(r, c, moves, allyColor)
       if (self.whiteToMove and self.whiteCastleQueenside) or (not self.whiteToMove and self.blackCastleQueenside):
-         self.getQueensideCaslteMoves(r, c, moves, allyColor)
+         self.getQueensideCastleMoves(r, c, moves, allyColor)
 
    
    def getKingsideCastleMoves(self, r, c, moves, allyColor):
@@ -350,7 +344,7 @@ class GameState():
        not self.squareUnderAttack(r, c + 1, allyColor) and not self.squareUnderAttack(r, c + 2, allyColor):
          moves.append(Move((r, c), (r, c + 2), self.board, castle = True))
 
-   def getQueensideCaslteMoves(self, r, c, moves, allyColor):
+   def getQueensideCastleMoves(self, r, c, moves, allyColor):
       if self.board[r][c - 1] == '--' and self.board[r][c - 2] == '--' and self.board[r][c - 3] == '--' and \
        not self.squareUnderAttack(r, c - 1, allyColor) and not self.squareUnderAttack(r, c - 2, allyColor):
          moves.append(Move((r, c), (r, c - 2), self.board, castle = True))
@@ -370,6 +364,12 @@ class GameState():
                   break
                elif endPiece[0] == enemyColor:
                   type = endPiece[1]
+                    # If the enemy piece is a rook and the direction is horizontal or vertical
+                    # or if the enemy piece is a bishop and the direction is diagonal
+                    # or if the enemy piece is a queen and the direction is horizontal, vertical or diagonal
+                    # or if the enemy piece is a pawn and it can attack in the direction
+                    # or if the enemy piece is a king and it can attack in the direction
+                    # then the square is under attack
                   if (0 <= j <= 3 and type == 'R') or \
                         (4 <= j <= 7 and type == 'B') or \
                         (i == 1 and type == 'p' and ((enemyColor == 'w' and 6 <= j <= 7) or (enemyColor == 'b' and 4 <= j <= 5))) or \
