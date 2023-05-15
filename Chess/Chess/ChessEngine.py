@@ -31,9 +31,9 @@ class GameState():
 
       self.whiteCastleKingside = True
       self.whiteCastleQueenside = True
-      self.blackCaslteKingside = True
-      self.blackCaslteQueenside = True
-      self.castleRightsLog = [CastleRights(self.whiteCastleKingside, self.whiteCastleQueenside, self.blackCaslteKingside, self.blackCaslteQueenside)]
+      self.blackCastleKingside = True
+      self.blackCastleQueenside = True
+      self.castleRightsLog = [CastleRights(self.whiteCastleKingside, self.whiteCastleQueenside, self.blackCastleKingside, self.blackCastleQueenside)]
 
       
       '''self.currentCastlingRight = CastleRights(True, True, True, True)
@@ -219,6 +219,21 @@ class GameState():
                      break
             else:
                break
+      if self.whiteToMove:
+         if (r, c) == (7, 0):
+            if self.whiteCastleQueenside and self.board[7][1] == '--' and self.board[7][2] == '--' and self.board[7][3] == '--' and not self.squareUnderAttack(7, 2, 'b') and not self.squareUnderAttack(7, 3, 'b') and not self.whiteRooksMoved[0] and not self.whiteKingMoved:
+               moves.append(Move((r, c), (7, 2), self.board, isCastleMove=True))
+         elif (r, c) == (7, 7):
+            if self.whiteCastleKingside and self.board[7][5] == '--' and self.board[7][6] == '--' and not self.squareUnderAttack(7, 6, 'b') and not self.squareUnderAttack(7, 5, 'b') and not self.whiteRooksMoved[1] and not self.whiteKingMoved:
+               moves.append(Move((r, c), (7, 6), self.board, isCastleMove=True))
+      else:
+         if (r, c) == (0, 0):
+            if self.blackCastleQueenside and self.board[0][1] == '--' and self.board[0][2] == '--' and self.board[0][3] == '--' and not self.squareUnderAttack(0, 2, 'w') and not self.squareUnderAttack(0, 3, 'w') and not self.blackRooksMoved[0] and not self.blackKingMoved:
+                moves.append(Move((r, c), (0, 2), self.board, isCastleMove=True))
+         elif (r, c) == (0, 7):
+            if self.blackCastleKingside and self.board[0][5] == '--' and self.board[0][6] == '--' and not self.squareUnderAttack(0, 6, 'w') and not self.squareUnderAttack(0, 5, 'w') and not self.blackRooksMoved[1] and not self.blackKingMoved:
+                moves.append(Move((r, c), (0, 6), self.board, isCastleMove=True))
+
 
 
 
@@ -301,9 +316,9 @@ class GameState():
       if inCheck:
          print("oof")
          return
-      if (self.whiteToMove and self.whiteCastleKingside) or (not self.whiteToMove and self.blackCaslteKingside):
+      if (self.whiteToMove and self.whiteCastleKingside) or (not self.whiteToMove and self.blackCastleKingside):
          self.getKingsideCastleMoves(r, c, moves, allyColor)
-      if (self.whiteToMove and self.whiteCastleQueenside) or (not self.whiteToMove and self.blackCaslteQueenside):
+      if (self.whiteToMove and self.whiteCastleQueenside) or (not self.whiteToMove and self.blackCastleQueenside):
          self.getQueensideCaslteMoves(r, c, moves, allyColor)
 
    
@@ -415,20 +430,28 @@ class GameState():
          self.whiteCastleQueenside = False
          self.whiteCastleKingside = False
       elif move.pieceMoved == 'bK':
-         self.blackCaslteQueenside = False
-         self.blackCaslteKingside = False
+         self.blackCastleQueenside = False
+         self.blackCastleKingside = False
       elif move.pieceMoved == 'wR':
          if move.startRow == 7:
             if move.startCol == 7:
                self.whiteCastleKingside = False
             elif move.startCol == 0:
                self.whiteCastleQueenside = False
+         if move.startRow == 0 and move.startCol == 0:
+            self.blackCastleQueenside = False
+         elif move.startRow == 0 and move.startCol == 7:
+            self.blackCastleKingside = False
       elif move.pieceMoved == 'bR':
          if move.startRow == 0:
             if move.startCol == 7:
-               self.blackCaslteKingside = False
+               self.blackCastleKingside = False
             elif move.startCol == 0:
-               self.blackCaslteQueenside = False
+               self.blackCastleQueenside = False
+         if move.startRow == 7 and move.startCol == 0:
+            self.whiteCastleQueenside = False
+         elif move.startRow == 7 and move.startCol == 7:
+            self.whiteCastleKingside = False
       if move.pieceCaptured == 'wR':
             if move.endRow == 7:
                 if move.endCol == 0:
