@@ -75,20 +75,35 @@ def main():
 
         drawBoard(screen)
         drawPieces(screen, gs.board)
-        drawGameState(screen, gs)
+        drawGameState(screen, gs, validMoves, sqSelected)
         P.display.flip()
         clock.tick(MAX_FPS)
         P.display.flip()
         
 
+def highlightSquares(Screen, gs, validMoves, sqSelected):
+    if sqSelected != ():
+        r, c = sqSelected
+        if gs.board[r][c][0] == ('w' if gs.whiteToMove else 'b'):
+            s = P.Surface((SQ_SIZE, SQ_SIZE))
+            s.set_alpha(130)
+            s.fill(P.Color('#76420a'))
+            Screen.blit(s, (c*SQ_SIZE, r*SQ_SIZE))
+            s.set_alpha(90)
+            s.fill(P.Color('#b1781c'))
+            for move in validMoves:
+                if move.startRow == r and move.startCol == c:
+                    Screen.blit(s, (move.endCol * SQ_SIZE, move.endRow * SQ_SIZE))
 
-def drawGameState(screen, gs):
+
+def drawGameState(screen, gs, validMoves, sqSelected):
     drawBoard(screen)
+    highlightSquares(screen, gs, validMoves, sqSelected)
     drawPieces(screen, gs.board)
 
 
 def drawBoard(screen):
-    colors = [P.Color("#FADAB4"), P.Color("#B2855F")]
+    colors = [P.Color("#f0d9b5"), P.Color("#b58863")]
     for r in range(DIMENSION):
         for c in range(DIMENSION):
             color = colors[(r+c)%2]
