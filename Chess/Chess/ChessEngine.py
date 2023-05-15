@@ -60,8 +60,16 @@ class GameState():
       if move.pawnPromotion:
          promotedPiece = input("Promote to Q, R, B, or N:")
          self.board[move.endRow][move.endCol] = move.pieceMoved[0] + promotedPiece
-         
-      
+      self.updateCastleRights(move)
+      self.castleRightsLog.append(CastleRights(self.whiteCastleKingside, self.blackCastleKingside, 
+                                               self.whiteCastleQueenside, self.blackCastleQueenside))
+      if move.castle:
+         if move.endCol - move.startCol == 2:
+            self.board[move.endRow][move.endCol - 1] = self.board[move.endRow][move.endCol + 1]
+            self.board[move.endRow][move.endCol + 1] = '--'
+         else:
+            self.board[move.endRow][move.endCol + 1] = self.board[move.endRow][move.endCol - 2]
+            self.board[move.endRow][move.endCol - 2] = '--'
       
 
    
@@ -83,6 +91,21 @@ class GameState():
             self.enPassantPossible = (move.endRow, move.endCol)
          if move.pieceMoved[1] == 'p' and abs(move.startRow - move.endRow) == 2:
             self.enPassantPossible = ()
+         if move.pieceMoved[1] == 'p' and abs(move.startRow - move.endRow) == 2:
+            self.enPassantPossible = ()
+         if move.castle:
+            if move.endCol - move.startCol == 2: # Kingside castle
+                self.board[move.endRow][move.endCol+1] = self.board[move.endRow][move.endCol-1]
+                self.board[move.endRow][move.endCol-1] = '--'
+            else: # Queenside castle
+                self.board[move.endRow][move.endCol-2] = self.board[move.endRow][move.endCol+1]
+                self.board[move.endRow][move.endCol+1] = '--'
+         self.castleRightsLog.pop()
+         CastleRights = self.castleRightsLog[-1]
+         self.whiteCastleKingside = CastleRights.wks
+         self.blackCastleKingside = CastleRights.bks
+         self.whiteCastleQueenside = CastleRights.wqs
+         self.blackCastleQueenside = CastleRights.bqs
    
 
 
@@ -493,6 +516,7 @@ class Move():
       self.pieceCaptured = board[self.endRow][self.endCol]
       self.enPassant = enPassant
       self.pawnPromotion = pawnPromotion
+      self.castle = castle
       if enPassant:
          self.pieceCaptured = 'bp' if self.pieceMoved == 'wp' else 'wp'
       self.moveID = self.startRow * 1000 + self.startCol * 100 + self.endRow * 10 + self.endCol
