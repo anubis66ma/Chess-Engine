@@ -34,10 +34,12 @@ def main():
     gs = ChessEngine.GameState()
     validMoves = gs.getValidMoves()
     moveMade = False
+    moveLog = []  # Initialize an empty move log
     loadImages()
     running = True
     sqSelected = ()
     playerClicks = []
+    
     while running:
         for e in P.event.get():
             if e.type == P.QUIT:
@@ -50,7 +52,7 @@ def main():
                     sqSelected = ()
                     playerClicks = []
                 else:                
-                    sqSelected =  (row, col)
+                    sqSelected = (row, col)
                     playerClicks.append(sqSelected)
                 if len(playerClicks) == 2:
                     move = ChessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
@@ -58,38 +60,40 @@ def main():
                     for i in range(len(validMoves)):
                         if move == validMoves[i]:
                             gs.makeMove(validMoves[i])
+                            moveLog.append(validMoves[i])  # Add the move to the move log
                             moveMade = True
                             sqSelected = ()
                             playerClicks = []
                     if not moveMade:
                         playerClicks = [sqSelected]
             elif e.type == P.KEYDOWN:
-                if e.key ==P.K_z:
-                    gs.undoMove()
-                    moveMade = True
+                if e.key == P.K_z:
+                    if len(moveLog) > 0:
+                        gs.undoMove()
+                        moveLog.pop()  # Remove the last move from the move log
+                        moveMade = True
 
         if moveMade:
             validMoves = gs.getValidMoves()
             moveMade = False
 
-
         drawBoard(screen)
         drawPieces(screen, gs.board)
-        drawGameState(screen, gs, validMoves, sqSelected)
+        drawGameState(screen, gs, validMoves, sqSelected, moveLog)  # Pass the moveLog argument
         P.display.flip()
         clock.tick(MAX_FPS)
         P.display.flip()
         
 
-def highlightSquares(Screen, gs, validMoves, sqSelected):
+def highlightSquares(Screen, gs, validMoves, sqSelected, moveLog):
     if sqSelected != ():
         r, c = sqSelected
         if gs.board[r][c][0] == ('w' if gs.whiteToMove else 'b'):
             s = P.Surface((SQ_SIZE, SQ_SIZE))
             s.set_alpha(100)
             s.fill(P.Color('#9C780D'))
-            Screen.blit(s, (c*SQ_SIZE, r*SQ_SIZE))
-            s.set_alpha(20)
+            Screen.blit(s, (c * SQ_SIZE, r * SQ_SIZE))
+            s.set_alpha(0)
             s.fill(P.Color('#b1781c'))
             for move in validMoves:
                 if move.startRow == r and move.startCol == c:
@@ -97,20 +101,37 @@ def highlightSquares(Screen, gs, validMoves, sqSelected):
                     if gs.board[destR][destC] == "--":  # Check if the square is empty
                         dotSurface = P.Surface((SQ_SIZE, SQ_SIZE), P.SRCALPHA)
                         dotSurface.set_alpha(90)
-                        P.draw.circle(dotSurface, P.Color('#444654'), (int(SQ_SIZE/2), int(SQ_SIZE/2)), 10)
+                        P.draw.circle(dotSurface, P.Color('#444654'), (int(SQ_SIZE / 2), int(SQ_SIZE / 2)), 10)
                         Screen.blit(dotSurface, (destC * SQ_SIZE, destR * SQ_SIZE))
                     elif gs.board[destR][destC][0] == ('b' if gs.whiteToMove else 'w'):  # Check if the square is occupied by an enemy piece
                         highlightSurface = P.Surface((SQ_SIZE, SQ_SIZE), P.SRCALPHA)
                         highlightSurface.set_alpha(150)
-                        highlightSurface.fill(P.Color('#202124'))
-                        P.draw.circle(highlightSurface, P.Color('#FF000000'), (int(SQ_SIZE/2), int(SQ_SIZE/2)), 37, 0) # set thickness parameter to 0
+                        highlightSurface.fill(P.Color('#0E66AA'))
+                        P.draw.circle(highlightSurface, P.Color('#FF000000'), (int(SQ_SIZE / 2), int(SQ_SIZE / 2)), 37, 0)
                         Screen.blit(highlightSurface, (destC * SQ_SIZE, destR * SQ_SIZE))
-                    Screen.blit(s, (destC * SQ_SIZE, destR * SQ_SIZE))
+    if moveLog:
+        lastMove = moveLog[-1]
+        startR, startC = lastMove.startRow, lastMove.startCol
+        endR, endC = lastMove.endRow, lastMove.endCol
+        lastMoveSurface = P.Surface((SQ_SIZE, SQ_SIZE), P.SRCALPHA)
+        lastMoveSurface.set_alpha(70)
+        lastMoveSurface.fill(P.Color('#D0C011'))
+        Screen.blit(lastMoveSurface, (startC * SQ_SIZE, startR * SQ_SIZE))
+        Screen.blit(lastMoveSurface, (endC * SQ_SIZE, endR * SQ_SIZE))
+    if gs.inCheck:
+        kingRow, kingCol = gs.whiteKingLocation if gs.whiteToMove else gs.blackKingLocation
+        kingSurface = P.Surface((SQ_SIZE, SQ_SIZE), P.SRCALPHA)
+        kingSurface.set_alpha(150)
+        kingSurface.fill(P.Color('#A50D0D'))
+        P.draw.circle(kingSurface, P.Color('#FF000000'), (int(SQ_SIZE/2), int(SQ_SIZE/2)), 34, 0)
+        Screen.blit(kingSurface, (kingCol * SQ_SIZE, kingRow * SQ_SIZE))
+    
+        
                     
 
-def drawGameState(screen, gs, validMoves, sqSelected):
+def drawGameState(screen, gs, validMoves, sqSelected, moveLog):
     drawBoard(screen)
-    highlightSquares(screen, gs, validMoves, sqSelected)
+    highlightSquares(screen, gs, validMoves, sqSelected, moveLog)
     drawPieces(screen, gs.board)
 
 
