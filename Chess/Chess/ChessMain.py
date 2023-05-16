@@ -86,15 +86,27 @@ def highlightSquares(Screen, gs, validMoves, sqSelected):
         r, c = sqSelected
         if gs.board[r][c][0] == ('w' if gs.whiteToMove else 'b'):
             s = P.Surface((SQ_SIZE, SQ_SIZE))
-            s.set_alpha(130)
-            s.fill(P.Color('#76420a'))
+            s.set_alpha(100)
+            s.fill(P.Color('#9C780D'))
             Screen.blit(s, (c*SQ_SIZE, r*SQ_SIZE))
-            s.set_alpha(90)
+            s.set_alpha(20)
             s.fill(P.Color('#b1781c'))
             for move in validMoves:
                 if move.startRow == r and move.startCol == c:
-                    Screen.blit(s, (move.endCol * SQ_SIZE, move.endRow * SQ_SIZE))
-
+                    destR, destC = move.endRow, move.endCol
+                    if gs.board[destR][destC] == "--":  # Check if the square is empty
+                        dotSurface = P.Surface((SQ_SIZE, SQ_SIZE), P.SRCALPHA)
+                        dotSurface.set_alpha(90)
+                        P.draw.circle(dotSurface, P.Color('#444654'), (int(SQ_SIZE/2), int(SQ_SIZE/2)), 10)
+                        Screen.blit(dotSurface, (destC * SQ_SIZE, destR * SQ_SIZE))
+                    elif gs.board[destR][destC][0] == ('b' if gs.whiteToMove else 'w'):  # Check if the square is occupied by an enemy piece
+                        highlightSurface = P.Surface((SQ_SIZE, SQ_SIZE), P.SRCALPHA)
+                        highlightSurface.set_alpha(150)
+                        highlightSurface.fill(P.Color('#202124'))
+                        P.draw.circle(highlightSurface, P.Color('#FF000000'), (int(SQ_SIZE/2), int(SQ_SIZE/2)), 37, 0) # set thickness parameter to 0
+                        Screen.blit(highlightSurface, (destC * SQ_SIZE, destR * SQ_SIZE))
+                    Screen.blit(s, (destC * SQ_SIZE, destR * SQ_SIZE))
+                    
 
 def drawGameState(screen, gs, validMoves, sqSelected):
     drawBoard(screen)
