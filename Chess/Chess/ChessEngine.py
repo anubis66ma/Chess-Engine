@@ -25,9 +25,10 @@ class GameState():
       self.inCheck = False
       self.pins = []
       self.checks = []
-      self.checkMate = False
-      self.staleMate = False
+      self.checkmate = False
+      self.stalemate = False
       self.enPassantPossible = ()
+      
 
       self.whiteCastleKingside = True
       self.whiteCastleQueenside = True
@@ -140,12 +141,12 @@ class GameState():
       
       if len(moves) == 0:
          if self.inCheck:
-            self.checkMate = True
+            self.checkmate = True
          else:
-            self.staleMate
+            self.stalemate
       else:
-         self.checkMate = False
-         self.staleMate = False
+         self.checkmate = False
+         self.stalemate = False
       return moves
 
 

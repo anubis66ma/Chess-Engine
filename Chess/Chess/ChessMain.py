@@ -35,54 +35,80 @@ def main():
     validMoves = gs.getValidMoves()
     moveMade = False
     moveLog = []  # Initialize an empty move log
+    animate = False
     loadImages()
     running = True
     sqSelected = ()
-    playerClicks = []
+    playerClicks = []  # Initialize as a list
+    gameOver = False
     
     while running:
         for e in P.event.get():
             if e.type == P.QUIT:
                 running = False
             elif e.type == P.MOUSEBUTTONDOWN:
-                location = P.mouse.get_pos()
-                col = location[0]//SQ_SIZE
-                row = location[1]//SQ_SIZE
-                if sqSelected == (row, col):
-                    sqSelected = ()
-                    playerClicks = []
-                else:                
-                    sqSelected = (row, col)
-                    playerClicks.append(sqSelected)
-                if len(playerClicks) == 2:
-                    move = ChessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
-                    print(move.getChessNotation())
-                    for i in range(len(validMoves)):
-                        if move == validMoves[i]:
-                            gs.makeMove(validMoves[i])
-                            moveLog.append(validMoves[i])  # Add the move to the move log
-                            moveMade = True
-                            sqSelected = ()
-                            playerClicks = []
-                    if not moveMade:
-                        playerClicks = [sqSelected]
+                if not gameOver:
+                    location = P.mouse.get_pos()
+                    col = location[0]//SQ_SIZE
+                    row = location[1]//SQ_SIZE
+                    if sqSelected == (row, col):
+                        sqSelected = ()
+                        playerClicks = []
+                    else:                
+                        sqSelected = (row, col)
+                        playerClicks.append(sqSelected)  # Append to the list
+                    if len(playerClicks) == 2:
+                        move = ChessEngine.Move(playerClicks[0], playerClicks[1], gs.board)
+                        print(move.getChessNotation())
+                        for i in range(len(validMoves)):
+                            if move == validMoves[i]:
+                                gs.makeMove(validMoves[i])
+                                moveLog.append(validMoves[i])  # Add the move to the move log
+                                moveMade = True
+                                animate = True
+                                sqSelected = ()
+                                playerClicks = []
+                        if not moveMade:
+                            playerClicks = [sqSelected]
+                # Move the following block outside of the 'elif' block for MOUSEBUTTONDOWN event
             elif e.type == P.KEYDOWN:
                 if e.key == P.K_z:
                     if len(moveLog) > 0:
                         gs.undoMove()
                         moveLog.pop()  # Remove the last move from the move log
                         moveMade = True
+                        animate = False
+                if e.key == P.K_r:
+                    gs = ChessEngine.GameState()
+                    validMoves = gs.getValidMoves()
+                    sqSelected = ()
+                    playerClicks = []
+                    moveMade = False
+                    animate = False
 
         if moveMade:
+            if animate:
+                animateMove(gs.moveLog[-1], screen, gs.board, clock)
             validMoves = gs.getValidMoves()
             moveMade = False
+            animate = False
 
         drawBoard(screen)
         drawPieces(screen, gs.board)
         drawGameState(screen, gs, validMoves, sqSelected, moveLog)  # Pass the moveLog argument
+        
+        if gs.checkmate:
+            gameOver = True
+            if gs.whiteToMove:
+                drawText(screen, 'Black wins by Checkmate')
+            else:
+                drawText(screen, 'White wins by Checkmate')
+        elif gs.stalemate:
+            gameOver = True
+            drawText(screen, 'Stalemate')
+        
         P.display.flip()
         clock.tick(MAX_FPS)
-        P.display.flip()
         
 
 def highlightSquares(Screen, gs, validMoves, sqSelected, moveLog):
@@ -136,6 +162,7 @@ def drawGameState(screen, gs, validMoves, sqSelected, moveLog):
 
 
 def drawBoard(screen):
+    global colors
     colors = [P.Color("#f0d9b5"), P.Color("#b58863")]
     for r in range(DIMENSION):
         for c in range(DIMENSION):
@@ -149,6 +176,34 @@ def drawPieces(screen, board):
             if piece != "--":
                 screen.blit(IMAGES[piece], P.Rect(c*SQ_SIZE, r*SQ_SIZE, SQ_SIZE, SQ_SIZE))
 
+
+def animateMove(move, screen, board, clock):
+    global colors
+    dR = move.endRow - move.startRow
+    dC = move.endCol - move.startCol
+    framesPerSquare = 10
+    frameCount = (abs(dR) + abs(dC)) * framesPerSquare
+    for frame in range(frameCount + 1):
+        r, c = ((move.startRow + dR * frame/frameCount, move.startCol + dC * frame/frameCount))
+        drawBoard(screen)
+        drawPieces(screen, board)
+        color = colors[(move.endRow + move.endCol) % 2]
+        endSquare = P.Rect(move.endCol * SQ_SIZE, move.endRow * SQ_SIZE, SQ_SIZE, SQ_SIZE)
+        P.draw.rect(screen, color, endSquare)
+        if move.pieceCaptured != '--':
+            screen.blit(IMAGES[move.pieceCaptured], endSquare)
+        screen.blit(IMAGES[move.pieceMoved], P.Rect(c * SQ_SIZE, r * SQ_SIZE, SQ_SIZE, SQ_SIZE))
+        P.display.flip()
+        clock.tick(480)
+
+
+def drawText(screen, text):
+    font = P.font.SysFont("Helvitca", 32, True, False)
+    textObject = font.render(text, 0, P.Color('gray'))
+    textLocation = P.Rect(0, 0, WIDTH, HEIGHT).move(WIDTH/2 - textObject.get_width()/2, HEIGHT/2 - textObject.get_height()/2)
+    screen.blit(textObject, textLocation)
+    textObject = font.render(text, 0, P.Color('black'))
+    screen.blit(textObject, textLocation.move(2, 2))
 
 if __name__ == "__main__":
     main()
