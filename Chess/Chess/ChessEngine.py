@@ -28,8 +28,7 @@ class GameState():
       self.checkmate = False
       self.stalemate = False
       self.enPassantPossible = ()
-      
-
+      self.currentCastlingRight = CastleRights(True, True, True, True)
       self.whiteCastleKingside = True
       self.whiteCastleQueenside = True
       self.blackCastleKingside = True
